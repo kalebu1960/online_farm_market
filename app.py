@@ -1,11 +1,15 @@
-from flask import Flask
-from models import db
+# minimal app.py to test models import
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SECRET_KEY'] = 'supersecret'
+try:
+    from models import User, Farmer, Product, Customer, Transaction
+    print("✅ Models imported successfully!")
+except ImportError as e:
+    print("❌ ImportError:", e)
 
-db.init_app(app)
-
-with app.app_context():
-    db.create_all()
+# Optional: print class names to double-check
+print("Available classes in models.py:")
+print(" -", User)
+print(" -", Farmer)
+print(" -", Product)
+print(" -", Customer)
+print(" -", Transaction)
