@@ -27,7 +27,8 @@ def create_sample_farmers(db):
             "address": "123 Farm Road",
             "city": "Springfield",
             "state": "Vermont",
-            "zip_code": "12345"
+            "zip_code": "12345",
+            "phone_number": "(555) 123-4567"
         },
         {
             "email": "berry_farm@example.com",
@@ -38,7 +39,8 @@ def create_sample_farmers(db):
             "address": "456 Orchard Lane",
             "city": "Portland",
             "state": "Oregon",
-            "zip_code": "97201"
+            "zip_code": "97201",
+            "phone_number": "(555) 234-5678"
         },
         {
             "email": "green_thumb@example.com",
@@ -49,7 +51,8 @@ def create_sample_farmers(db):
             "address": "789 Garden Street",
             "city": "Austin",
             "state": "Texas",
-            "zip_code": "73301"
+            "zip_code": "73301",
+            "phone_number": "(555) 345-6789"
         }
     ]
     
@@ -77,10 +80,11 @@ def create_sample_farmers(db):
                 user_id=user.id,
                 farm_name=farmer_data["farm_name"],
                 bio=farmer_data["bio"],
+                address=farmer_data["address"],
                 city=farmer_data["city"],
                 state=farmer_data["state"],
-                phone=farmer_data["phone"],
-                is_verified=True
+                zip_code=farmer_data["zip_code"],
+                phone_number=farmer_data["phone_number"]
             )
             db.add(farmer)
             db.commit()
