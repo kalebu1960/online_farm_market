@@ -217,15 +217,18 @@ class TransactionItem(Base, BaseModel):
         **kwargs
     ) -> 'TransactionItem':
         """Create a new transaction item with calculated total price."""
+        # Calculate total_price
         total_price = Decimal(str(unit_price)) * quantity
+        
+        # Create the instance using BaseModel.create
         return super().create(
-            db,
+            db=db,
             transaction_id=transaction_id,
             product_id=product_id,
             quantity=quantity,
             unit_price=unit_price,
             total_price=total_price,
-            **kwargs
+            **{k: v for k, v in kwargs.items() if k not in ['transaction_id', 'product_id', 'quantity', 'unit_price', 'total_price']}
         )
     
     def to_dict(self) -> dict:

@@ -65,12 +65,28 @@ def display_product_details(product: Product, console: Console) -> None:
     seller = product.farmer
     console.print("\n👤 Seller Information:")
     console.print(f"  🏠 {seller.farm_name}")
-    console.print(f"  📞 {seller.phone_number}")
-    if seller.whatsapp_number:
+    
+    # Only show contact information if available
+    if hasattr(seller, 'phone_number') and seller.phone_number:
+        console.print(f"  📞 {seller.phone_number}")
+    if hasattr(seller, 'whatsapp_number') and seller.whatsapp_number:
         console.print(f"  💬 WhatsApp: {seller.whatsapp_number}")
-    if seller.email:
+    if hasattr(seller, 'email') and seller.email:
         console.print(f"  ✉️  {seller.email}")
-    console.print(f"  📍 {seller.address}, {seller.city}, {seller.state} {seller.zip_code}")
+        
+    # Build address parts
+    address_parts = []
+    if hasattr(seller, 'address') and seller.address:
+        address_parts.append(seller.address)
+    if hasattr(seller, 'city') and seller.city:
+        address_parts.append(seller.city)
+    if hasattr(seller, 'state') and seller.state:
+        address_parts.append(seller.state)
+    if hasattr(seller, 'zip_code') and seller.zip_code:
+        address_parts.append(seller.zip_code)
+        
+    if address_parts:
+        console.print(f"  📍 {', '.join(address_parts)}")
     
     # Images (placeholder)
     if product.image_urls:
@@ -80,9 +96,10 @@ def display_product_details(product: Product, console: Console) -> None:
     
     # Action buttons (for CLI)
     console.print("\n[bold]Actions:[/] [dim]Contact seller for more details[/]")
-    console.print("  • Call: [bold]" + seller.phone_number + "[/]")
-    if seller.whatsapp_number:
-        console.print("  • WhatsApp: [bold]" + seller.whatsapp_number + "[/]")
+    if hasattr(seller, 'phone_number') and seller.phone_number:
+        console.print(f"  • Call: [bold]{seller.phone_number}[/]")
+    if hasattr(seller, 'whatsapp_number') and seller.whatsapp_number:
+        console.print(f"  • WhatsApp: [bold]{seller.whatsapp_number}[/]")
 
 # Create a command group for product-related commands
 @click.group()

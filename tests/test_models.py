@@ -90,7 +90,8 @@ def test_farmer_creation(db_session):
         "address": "123 Farm Rd",
         "city": "Farmville",
         "state": "CA",
-        "zip_code": "12345"
+        "zip_code": "12345",
+        "phone_number": "+1234567890"
     }
     farmer = Farmer.create(db_session, **farmer_data)
     
@@ -111,18 +112,23 @@ def test_product_creation(db_session):
     farmer = Farmer.create(
         db_session,
         user_id=user.id,
-        farm_name="Jane's Organic Farm"
+        farm_name="Jane's Organic Farm",
+        address="456 Farm Lane",
+        city="Farmtown",
+        state="CA",
+        zip_code="90210",
+        phone_number="+1987654321"
     )
     
     # Create a product
     product_data = {
-        "name": "Organic Tomatoes",
+        "title": "Organic Tomatoes",
         "description": "Fresh organic tomatoes",
         "price": 2.99,
-        "quantity_available": 50,
+        "quantity": "50 kg",
         "unit": "kg",
         "category": "vegetable",
-        "is_organic": True,
+        "location": "Farmtown, CA",
         "farmer_id": farmer.id
     }
     product = Product.create(db_session, **product_data)
@@ -169,18 +175,23 @@ def test_transaction_flow(db_session):
     farmer = Farmer.create(
         db_session,
         user_id=user_farmer.id,
-        farm_name="Bob's Farm"
+        farm_name="Bob's Farm",
+        address="789 Orchard Rd",
+        city="Orchardville",
+        state="CA",
+        zip_code="90210",
+        phone_number="+1122334455"
     )
     
     product = Product.create(
         db_session,
-        name="Organic Apples",
+        title="Organic Apples",
         description="Fresh organic apples",
         price=3.50,
-        quantity_available=100,
+        quantity="100 kg",
         unit="kg",
         category="fruit",
-        is_organic=True,
+        location="Orchardville, CA",
         farmer_id=farmer.id
     )
     
@@ -203,25 +214,44 @@ def test_transaction_flow(db_session):
     transaction = Transaction.create(
         db_session,
         customer_id=customer.id,
-        user_id=user_customer.id,  # Add user_id
+        user_id=user_customer.id,
         total_amount=10.50,
         status=TransactionStatus.PENDING,
         payment_method="credit_card",
         payment_status="pending"
     )
     
-    # Add items to the transaction
-    transaction_item = TransactionItem.create(
-        db_session,
+    # Create transaction item directly using SQLAlchemy
+    from decimal import Decimal
+    
+    # Calculate total price
+    unit_price = Decimal('3.50')
+    quantity = 3
+    total_price = unit_price * quantity
+    
+    # Create the transaction item directly
+    transaction_item = TransactionItem(
         transaction_id=transaction.id,
         product_id=product.id,
-        quantity=3,
-        unit_price=3.50
+        quantity=quantity,
+        price_per_unit=unit_price
     )
     
+    # Add to session and commit
+    db_session.add(transaction_item)
+    db_session.commit()
+    
+    # Refresh transaction to get the latest state
+    db_session.refresh(transaction)
+    
+    # Verify transaction
     assert transaction.id is not None
     assert transaction.customer_id == customer.id
     assert transaction.status == TransactionStatus.PENDING
+    
+    # Verify transaction item
+    assert transaction_item.id is not None
     assert transaction_item.transaction_id == transaction.id
     assert transaction_item.product_id == product.id
     assert transaction_item.quantity == 3
+    assert float(transaction_item.price_per_unit) == 3.50

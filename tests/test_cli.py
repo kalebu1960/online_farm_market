@@ -165,9 +165,9 @@ def test_login_success(runner, db_session):
         
         # Check for success message in the output
         output = result.output.lower()
-        success_terms = ["login successful", "welcome", "welcome back"]
-        assert any(term in output for term in success_terms), \
-            f"Expected login success message, got: {result.output}"
+        success_terms = ["welcome back", "✅", "customer dashboard"]
+        assert all(term in output for term in success_terms), \
+            f"Expected login success message containing welcome and dashboard, got: {result.output}"
     
     finally:
         # Clean up

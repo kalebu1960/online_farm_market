@@ -27,8 +27,7 @@ def create_sample_farmers(db):
             "address": "123 Farm Road",
             "city": "Springfield",
             "state": "Vermont",
-            "zip_code": "12345",
-            "phone_number": "(555) 123-4567"
+            "zip_code": "12345"
         },
         {
             "email": "berry_farm@example.com",
@@ -39,8 +38,7 @@ def create_sample_farmers(db):
             "address": "456 Orchard Lane",
             "city": "Portland",
             "state": "Oregon",
-            "zip_code": "97201",
-            "phone_number": "(555) 234-5678"
+            "zip_code": "97201"
         },
         {
             "email": "green_thumb@example.com",
@@ -51,29 +49,36 @@ def create_sample_farmers(db):
             "address": "789 Garden Street",
             "city": "Austin",
             "state": "Texas",
-            "zip_code": "73301",
-            "phone_number": "(555) 345-6789"
+            "zip_code": "73301"
         }
     ]
     
     created_farmers = []
     for farmer_data in farmers:
+        print(f"\nProcessing farmer: {farmer_data['email']}")
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == farmer_data["email"]).first()
         if existing_user:
+            print(f"User {farmer_data['email']} already exists")
             farmer = db.query(Farmer).filter(Farmer.user_id == existing_user.id).first()
             if farmer:
+                print(f"Farmer profile already exists for {farmer_data['email']}")
                 created_farmers.append(farmer)
                 continue
         else:
-            # Create user
-            user = User.create(
-                db=db,
-                email=farmer_data["email"],
-                password=farmer_data["password"],
-                full_name=farmer_data["full_name"],
-                role=UserRole.FARMER
-            )
+            try:
+                print(f"Creating user: {farmer_data['email']}")
+                user = User.create(
+                    db=db,
+                    email=farmer_data["email"],
+                    password=farmer_data["password"],
+                    full_name=farmer_data["full_name"],
+                    role=UserRole.FARMER
+                )
+                print(f"Created user with ID: {user.id}")
+            except Exception as e:
+                print(f"Error creating user: {e}")
+                raise
             
             # Create farmer profile
             farmer = Farmer(
@@ -83,8 +88,7 @@ def create_sample_farmers(db):
                 address=farmer_data["address"],
                 city=farmer_data["city"],
                 state=farmer_data["state"],
-                zip_code=farmer_data["zip_code"],
-                phone_number=farmer_data["phone_number"]
+                zip_code=farmer_data["zip_code"]
             )
             db.add(farmer)
             db.commit()
