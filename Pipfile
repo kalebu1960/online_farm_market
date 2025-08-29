@@ -4,8 +4,30 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+# Core dependencies
+sqlalchemy = "~=2.0.0"
+alembic = "~=1.13.0"
+click = "~=8.1.7"
+python-dotenv = "~=1.0.0"
+rich = "~=13.7.0"  # For beautiful CLI output
 
+# Development dependencies
 [dev-packages]
+pytest = "~=8.0.0"
+pytest-cov = "~=4.1.0"
+black = "~=24.0.0"
+isort = "~=5.13.0"
+flake8 = "~=7.0.0"
 
 [requires]
 python_version = "3.12"
+
+[scripts]
+start = "python -m online_farm_market.cli.main"
+test = "pytest tests/ -v"
+lint = "flake8 online_farm_market/ tests/"
+format = "black online_farm_market/ tests/"
+check-format = "black --check online_farm_market/ tests/"
+sort-imports = "isort online_farm_market/ tests/"
+migrate = "alembic upgrade head"
+create-migration = "alembic revision --autogenerate -m"
