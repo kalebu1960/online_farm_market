@@ -1,29 +1,75 @@
 """Product model for farm products."""
+from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from sqlalchemy import Column, String, Text, Numeric, Integer, ForeignKey, Boolean
+from sqlalchemy import Column, String, Text, Numeric, Integer, ForeignKey, Boolean, DateTime, event
 from sqlalchemy.orm import relationship, Session
 
 from ..db import Base
 from .base import BaseModel
 
 class Product(Base, BaseModel):
-    """Product model representing farm products for sale."""
+    """Product model representing farm products for sale in the marketplace."""
     __tablename__ = "products"
     
-    name = Column(String(100), nullable=False)
-    description = Column(Text)
+    # Basic information
+    title = Column(String(100), nullable=False, index=True)
+    description = Column(Text, nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
-    quantity_available = Column(Integer, default=0)
+    quantity = Column(String(50), nullable=False)  # e.g., "5 kg", "10 pieces"
     unit = Column(String(20))  # kg, g, lb, each, etc.
-    category = Column(String(50))  # vegetable, fruit, dairy, etc.
-    is_organic = Column(Boolean, default=False)
+    category = Column(String(50), nullable=False)  # vegetable, fruit, dairy, etc.
+    condition = Column(String(20), default='new')  # new, used, refurbished
+    status = Column(String(20), default='available')  # available, sold, reserved
+    location = Column(String(100), nullable=False)  # City/area where product is located
+    is_negotiable = Column(Boolean, default=False)
+    is_featured = Column(Boolean, default=False)
+    views = Column(Integer, default=0)
+    image_urls = Column(Text)  # Comma-separated URLs of product images
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Foreign keys
     farmer_id = Column(Integer, ForeignKey('farmers.id', ondelete='CASCADE'), nullable=False)
     
     # Relationships
     farmer = relationship("Farmer", back_populates="products")
     transaction_items = relationship("TransactionItem", back_populates="product")
+    
+    # For backward compatibility
+    @property
+    def name(self):
+        return self.title
+        
+    @property
+    def quantity_available(self):
+        try:
+            return int(self.quantity.split()[0])
+        except (ValueError, AttributeError):
+            return 0
+            
+    @property
+    def is_organic(self):
+        return 'organic' in self.title.lower() or 'organic' in self.description.lower()
+    
+    def increment_views(self, db: Session):
+        """Increment the view count for this product."""
+        self.views += 1
+        db.commit()
+        
+    def mark_as_sold(self, db: Session):
+        """Mark this product as sold."""
+        self.status = 'sold'
+        db.commit()
+        
+    def get_image_urls(self) -> List[str]:
+        """Get a list of image URLs."""
+        if not self.image_urls:
+            return []
+        return [url.strip() for url in self.image_urls.split(',') if url.strip()]
     
     @classmethod
     def get_by_farmer_id(

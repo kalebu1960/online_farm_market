@@ -53,7 +53,6 @@ def main():
 # Add command groups
 cli.add_command(auth.auth_group)
 cli.add_command(products.products_group)
-cli.add_command(transactions.transactions_group)
 
 if __name__ == "__main__":
     main()

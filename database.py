@@ -84,11 +84,17 @@ class Farmer(Base, BaseModel):
     
     user_id = Column(Integer, ForeignKey('users.id'), unique=True, nullable=False)
     farm_name = Column(String(100), nullable=False)
-    bio = Column(Text)
-    address = Column(String(255))
-    city = Column(String(100))
-    state = Column(String(100))
-    zip_code = Column(String(20))
+    bio = Column(Text, nullable=True)
+    address = Column(String(200), nullable=False)
+    city = Column(String(100), nullable=False)
+    state = Column(String(100), nullable=False)
+    zip_code = Column(String(20), nullable=False)
+    phone_number = Column(String(20), nullable=False)
+    whatsapp_number = Column(String(20), nullable=True)
+    email = Column(String(100), nullable=True)
+    website = Column(String(200), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     
     # Relationships
     user = relationship("User", back_populates="farmer_profile")
@@ -101,24 +107,45 @@ class Farmer(Base, BaseModel):
 class Product(Base, BaseModel):
     __tablename__ = "products"
     
-    name = Column(String(100), nullable=False)
-    description = Column(Text)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
-    quantity_available = Column(Integer, default=0)
-    unit = Column(String(20))
-    category = Column(String(50))
-    is_organic = Column(Boolean, default=False)
+    quantity = Column(String(50), nullable=False, default="1")
+    unit = Column(String(20), nullable=True)
+    category = Column(String(50), nullable=False)
+    condition = Column(String(20), nullable=False, default="new")
+    status = Column(String(20), nullable=False, default="available")
+    location = Column(String(100), nullable=False)
+    is_negotiable = Column(Boolean, default=False)
+    is_featured = Column(Boolean, default=False)
+    views = Column(Integer, default=0)
     farmer_id = Column(Integer, ForeignKey('farmers.id'), nullable=False)
+    
+    # Image handling (in a real app, this would be a separate table)
+    image_urls = Column(Text, nullable=True)
     
     # Relationships
     farmer = relationship("Farmer", back_populates="products")
-    transaction_items = relationship("TransactionItem", back_populates="product")
+    
+    def increment_views(self, db):
+        """Increment the view count for this product."""
+        self.views = (self.views or 0) + 1
+        db.commit()
+    
+    def mark_as_sold(self, db):
+        """Mark the product as sold."""
+        self.status = "sold"
+        db.commit()
+    
+    def get_image_urls(self):
+        """Return a list of image URLs."""
+        if not self.image_urls:
+            return []
+        return self.image_urls.split(',')
     
     @classmethod
     def get_by_farmer_id(cls, db, farmer_id: int, skip: int = 0, limit: int = 100) -> List['Product']:
         return db.query(cls).filter(cls.farmer_id == farmer_id).offset(skip).limit(limit).all()
-    
-    @classmethod
     def get_available_products(cls, db, skip: int = 0, limit: int = 100) -> List['Product']:
         return db.query(cls).filter(cls.quantity_available > 0).offset(skip).limit(limit).all()
 
@@ -164,8 +191,8 @@ class TransactionItem(Base, BaseModel):
     
     transaction_id = Column(Integer, ForeignKey('transactions.id'), nullable=False)
     product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
-    quantity = Column(Integer, nullable=False)
-    unit_price = Column(Numeric(10, 2), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    price_per_unit = Column(Numeric(10, 2), nullable=False)
     
     # Relationships
     transaction = relationship("Transaction", back_populates="items")
