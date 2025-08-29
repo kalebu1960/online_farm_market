@@ -12,7 +12,8 @@ from rich.theme import Theme
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import local modules
-from . import auth, products, transactions
+from . import auth, products
+from .products import guest as guest_group
 from ..db import get_db, init_db
 
 # Initialize console with custom theme
@@ -53,6 +54,7 @@ def main():
 # Add command groups
 cli.add_command(auth.auth_group)
 cli.add_command(products.products_group)
+cli.add_command(guest_group)
 
 if __name__ == "__main__":
     main()

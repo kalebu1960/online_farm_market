@@ -126,6 +126,17 @@ class Product(Base, BaseModel):
     
     # Relationships
     farmer = relationship("Farmer", back_populates="products")
+    transaction_items = relationship("TransactionItem", back_populates="product")
+    
+    @property
+    def name(self):
+        """Alias for title to maintain backward compatibility."""
+        return self.title
+        
+    @name.setter
+    def name(self, value):
+        """Set the title when name is set."""
+        self.title = value
     
     def increment_views(self, db):
         """Increment the view count for this product."""

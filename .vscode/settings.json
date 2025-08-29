@@ -1,0 +1,7 @@
+{
+    "python.testing.pytestArgs": [
+        "online_farm_market"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}

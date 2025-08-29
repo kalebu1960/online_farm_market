@@ -14,6 +14,7 @@ from sqlalchemy import or_
 from ..models.product import Product
 from ..models.farmer import Farmer
 from ..models.user import UserRole, User
+from .auth import require_auth
 
 # Common categories for farm products
 PRODUCT_CATEGORIES = [
@@ -154,45 +155,18 @@ def add_product(ctx, title: str, description: str, price: float, quantity: str,
         db.rollback()
         console.print(f"[error]Error creating product listing:[/] {str(e)}")
 
-@products_group.command()
-@click.option('--search', '-s', help='Search in title and description')
-@click.option('--category', type=click.Choice(PRODUCT_CATEGORIES, case_sensitive=False), 
-              help='Filter by category')
-@click.option('--location', help='Filter by location (city/area)')
-@click.option('--min-price', type=float, help='Minimum price')
-@click.option('--max-price', type=float, help='Maximum price')
-@click.option('--condition', type=click.Choice(PRODUCT_CONDITIONS, case_sensitive=False),
-              help='Filter by condition')
-@click.option('--sort', type=click.Choice(['newest', 'price-low', 'price-high', 'popular']), 
-              default='newest', help='Sort results')
-@click.option('--limit', type=int, default=20, help='Maximum number of results to show')
-@click.option('--id', type=int, help='View details of a specific product by ID')
-@click.pass_context
-def list_products(ctx, search: Optional[str], category: Optional[str], location: Optional[str],
-                 min_price: Optional[float], max_price: Optional[float], condition: Optional[str],
-                 sort: str, limit: int, id: Optional[int]):
-    """Browse product listings with filters and search."""
-    db = ctx.obj['db']
-    console = ctx.obj['console']
-    
+def _list_products(db: Session, search: Optional[str] = None, category: Optional[str] = None,
+                  location: Optional[str] = None, min_price: Optional[float] = None,
+                  max_price: Optional[float] = None, condition: Optional[str] = None,
+                  sort: str = 'newest', limit: int = 20, product_id: Optional[int] = None):
+    """Internal function to list products with filters and search."""
     # Start with base query
     query = db.query(Product).join(Farmer).filter(Product.status == 'available')
     
     # Apply filters
-    if id:
-        # Show detailed view for a single product
-        product = query.filter(Product.id == id).first()
-        if not product:
-            console.print("[error]Product not found or no longer available.[/]")
-            return
-        
-        # Increment view count
-        product.views += 1
-        db.commit()
-        
-        # Display detailed view
-        display_product_details(product, console)
-        return
+    if product_id:
+        # Return single product for detailed view
+        return query.filter(Product.id == product_id).first()
     
     if search:
         search_terms = f'%{search}%'
@@ -236,7 +210,69 @@ def list_products(ctx, search: Optional[str], category: Optional[str], location:
         query = query.order_by(Product.views.desc())
     
     # Execute query
-    products = query.limit(limit).all()
+    return query.limit(limit).all()
+
+@products_group.command()
+@click.option('--search', '-s', help='Search in title and description')
+@click.option('--category', type=click.Choice(PRODUCT_CATEGORIES, case_sensitive=False), 
+              help='Filter by category')
+@click.option('--location', help='Filter by location (city/area)')
+@click.option('--min-price', type=float, help='Minimum price')
+@click.option('--max-price', type=float, help='Maximum price')
+@click.option('--condition', type=click.Choice(PRODUCT_CONDITIONS, case_sensitive=False),
+              help='Filter by condition')
+@click.option('--sort', type=click.Choice(['newest', 'price-low', 'price-high', 'popular']), 
+              default='newest', help='Sort results')
+@click.option('--limit', type=int, default=20, help='Maximum number of results to show')
+@click.option('--id', type=int, help='View details of a specific product by ID')
+@click.pass_context
+def list_products(ctx, search: Optional[str], category: Optional[str], location: Optional[str],
+                 min_price: Optional[float], max_price: Optional[float], condition: Optional[str],
+                 sort: str, limit: int, id: Optional[int]):
+    """Browse product listings with filters and search."""
+    db = ctx.obj['db']
+    console = ctx.obj['console']
+    
+    # Get products using the internal function
+    if id:
+        # Show detailed view for a single product
+        product = _list_products(
+            db=db,
+            search=search,
+            category=category,
+            location=location,
+            min_price=min_price,
+            max_price=max_price,
+            condition=condition,
+            sort=sort,
+            limit=limit,
+            product_id=id
+        )
+        
+        if not product:
+            console.print("[error]Product not found or no longer available.[/]")
+            return
+        
+        # Increment view count
+        product.views += 1
+        db.commit()
+        
+        # Display detailed view
+        display_product_details(product, console)
+        return
+    
+    # List multiple products
+    products = _list_products(
+        db=db,
+        search=search,
+        category=category,
+        location=location,
+        min_price=min_price,
+        max_price=max_price,
+        condition=condition,
+        sort=sort,
+        limit=limit
+    )
     
     if not products:
         console.print("\n[info]No products found matching your criteria.[/]")
@@ -444,5 +480,106 @@ def my_listings(ctx):
     except Exception as e:
         console.print(f"[error]Error retrieving your listings:[/] {str(e)}")
 
+# Create a guest command group for unauthenticated access
+@click.group(name="guest")
+def guest_group():
+    """Browse products without logging in."""
+    pass
+
+@guest_group.command(name="browse")
+@click.option('--search', '-s', help='Search in title and description')
+@click.option('--category', type=click.Choice(PRODUCT_CATEGORIES, case_sensitive=False), 
+              help='Filter by category')
+@click.option('--location', help='Filter by location (city/area)')
+@click.option('--min-price', type=float, help='Minimum price')
+@click.option('--max-price', type=float, help='Maximum price')
+@click.option('--condition', type=click.Choice(PRODUCT_CONDITIONS, case_sensitive=False),
+              help='Filter by condition')
+@click.option('--sort', type=click.Choice(['newest', 'price-low', 'price-high', 'popular']), 
+              default='newest', help='Sort results')
+@click.option('--limit', type=int, default=20, help='Maximum number of results to show')
+@click.option('--id', type=int, help='View details of a specific product by ID')
+@click.pass_context
+def guest_browse(ctx, search: Optional[str], category: Optional[str], location: Optional[str],
+               min_price: Optional[float], max_price: Optional[float], condition: Optional[str],
+               sort: str, limit: int, id: Optional[int]):
+    """Browse available products (no login required)."""
+    db = ctx.obj['db']
+    console = ctx.obj['console']
+    
+    console.print("\n[bold]🌱 Welcome to Farm Market![/]")
+    console.print("Browse our fresh farm products. [dim](Log in to purchase or sell items)[/]\n")
+    
+    # Get products using the internal function
+    if id:
+        # Show detailed view for a single product
+        product = _list_products(
+            db=db,
+            search=search,
+            category=category,
+            location=location,
+            min_price=min_price,
+            max_price=max_price,
+            condition=condition,
+            sort=sort,
+            limit=limit,
+            product_id=id
+        )
+        
+        if not product:
+            console.print("[error]Product not found or no longer available.[/]")
+            return
+        
+        # Increment view count
+        product.views += 1
+        db.commit()
+        
+        # Display detailed view
+        display_product_details(product, console)
+        console.print("\n[dim]💡 Create an account or log in to contact the seller.[/]")
+        return
+    
+    # List multiple products
+    products = _list_products(
+        db=db,
+        search=search,
+        category=category,
+        location=location,
+        min_price=min_price,
+        max_price=max_price,
+        condition=condition,
+        sort=sort,
+        limit=limit
+    )
+    
+    if not products:
+        console.print("\n[info]No products found matching your criteria.[/]")
+        console.print("Try adjusting your search filters.")
+        return
+    
+    # Display results in a table
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("ID", style="dim", width=8)
+    table.add_column("Title", width=30)
+    table.add_column("Price", width=15)
+    table.add_column("Category", width=15)
+    table.add_column("Location", width=20)
+    table.add_column("Seller", width=20)
+    
+    for product in products:
+        table.add_row(
+            str(product.id),
+            product.title,
+            f"${product.price:.2f}",
+            product.category,
+            f"{product.farmer.city}, {product.farmer.state}" if product.farmer else "N/A",
+            product.farmer.farm_name if product.farmer else "N/A"
+        )
+    
+    console.print(table)
+    console.print("\n[dim]Use 'browse --id <ID>' to view details of a specific product.[/]")
+    console.print("[dim]Log in or create an account to contact sellers and make purchases.[/]")
+
 # Add the products group to the main CLI
 products = products_group
+guest = guest_group

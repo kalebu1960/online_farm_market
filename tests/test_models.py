@@ -1,19 +1,35 @@
 import pytest
+import os
+import sys
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import os
-import sys
 
 # Add the parent directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models import Base, User, Farmer, Product, Customer, Transaction, TransactionItem, UserRole, TransactionStatus
-from database import SessionLocal, engine
+# Import Base from database to ensure we're using the same metadata
+from database import (
+    Base, 
+    User, 
+    Farmer, 
+    Product, 
+    Customer, 
+    Transaction, 
+    TransactionItem, 
+    UserRole, 
+    TransactionStatus,
+    SessionLocal,
+    engine
+)
 
-# Test database setup
-TEST_DATABASE_URL = "sqlite:///./test_farm_market.db"
-test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+# Test database setup with in-memory SQLite to avoid file conflicts
+TEST_DATABASE_URL = "sqlite:///:memory:"
+test_engine = create_engine(
+    TEST_DATABASE_URL, 
+    connect_args={"check_same_thread": False},
+    echo=True  # Enable SQL logging for debugging
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 # Create test database tables
