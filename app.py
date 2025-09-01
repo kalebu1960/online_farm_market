@@ -156,5 +156,13 @@ def create_product():
 with app.app_context():
     init_db()
 
+# Import and register blueprints after app initialization to avoid circular imports
+from routes import auth_bp, products_bp, transactions_bp
+
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(products_bp, url_prefix='/api/products')
+app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

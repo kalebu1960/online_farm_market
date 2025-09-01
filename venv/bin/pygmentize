@@ -1,4 +1,4 @@
-#!/home/intruder/online_farm_market/venv/bin/python
+#!/home/intruder/online_farm_market/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
