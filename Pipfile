@@ -10,6 +10,7 @@ alembic = "~=1.13.0"
 click = "~=8.1.7"
 python-dotenv = "~=1.0.0"
 rich = "~=13.7.0"  # For beautiful CLI output
+passlib = "~=1.7.4"  # For secure password hashing
 
 # Development dependencies
 [dev-packages]
