@@ -83,15 +83,7 @@ This project uses:
 - flake8 for linting
 - mypy for type checking
 
-Run the following commands before committing:
-
-```bash
-black .
-isort .
-flake8
-mypy .
-```
-
+video link https://drive.google.com/file/d/1oa0UKC9QXoufwCCPcI2oOewMGM_M_6bG/view?usp=drive_link
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
