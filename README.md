@@ -83,6 +83,12 @@ This project uses:
 - flake8 for linting
 - mypy for type checking
 
+
+
+## 📄 Project Presentation
+[![View Presentation](https://img.shields.io/badge/Google%20Drive-View%20Presentation-blue?style=for-the-badge&logo=google-drive)](https://drive.google.com/file/d/1cFsAphIMh2o1p1hRx8DhCUkCq5I8RfsF/view?usp=sharing)
+
+
 video link https://drive.google.com/file/d/1oa0UKC9QXoufwCCPcI2oOewMGM_M_6bG/view?usp=drive_link
 ## License
 
